@@ -21,20 +21,19 @@ export class User extends Model {
     type: DataType.STRING,
     allowNull: false,
   })
-  name: string;
+  firstName: string;
 
   @Column({
     type: DataType.STRING,
     allowNull: false,
   })
-  provider: string;
+  lastName: string;
 
   @Column({
     type: DataType.STRING,
-    unique: true,
-    allowNull: false,
+    allowNull: true,
   })
-  providerId: string;
+  profilePicture: string;
 
   @Column({
     type: DataType.INTEGER,
