@@ -1,8 +1,14 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { Game } from '../models/game.model';
 import { User } from '../models/user.model';
 import { GameBLL } from './bll/game.bll';
+import { GameHistoryResponseDto, GameStatsResponseDto } from './dto/game.dto';
+import { Op } from 'sequelize';
 
 @Injectable()
 export class GameService {
@@ -19,23 +25,28 @@ export class GameService {
       board: [
         ['', '', ''],
         ['', '', ''],
-        ['', '', '']
+        ['', '', ''],
       ],
-      status: 'ongoing'
+      status: 'ongoing',
     });
   }
 
   async getCurrentGame(userId: number): Promise<Game | null> {
     return await Game.findOne({
-      where: { 
+      where: {
         userId,
-        status: 'ongoing'
+        status: 'ongoing',
       },
-      include: [User]
+      include: [User],
     });
   }
 
-  async makeMove(gameId: number, userId: number, row: number, col: number): Promise<Game> {
+  async makeMove(
+    gameId: number,
+    userId: number,
+    row: number,
+    col: number,
+  ): Promise<Game> {
     const game = await Game.findOne({
       where: { id: gameId, userId },
       include: [User],
@@ -89,11 +100,59 @@ export class GameService {
     if (!user) {
       throw new NotFoundException('User not found');
     }
-    
-    const newConsecutiveWins = GameBLL.calculateConsecutiveWins(user.consecutiveWins, won);
+
+    const newConsecutiveWins = GameBLL.calculateConsecutiveWins(
+      user.consecutiveWins,
+      won,
+    );
     user.score = GameBLL.calculateScore(user.score, won, newConsecutiveWins);
     user.consecutiveWins = newConsecutiveWins;
-    
+
     await user.save();
+  }
+
+  async getGameHistory(userId: number): Promise<GameHistoryResponseDto[]> {
+    const games = await Game.findAll({
+      where: {
+        userId,
+        status: {
+          [Op.in]: ['won', 'lost', 'draw']  
+        }
+      },
+      order: [['createdAt', 'DESC']],
+      limit: 10,
+    });
+  
+    return games.map((game) => ({
+      id: game.id,
+      status: game.status as 'won' | 'lost' | 'draw',  
+      playedAt: game.createdAt,
+    }));
+  }
+
+  async getGameStats(userId: number): Promise<GameStatsResponseDto> {
+    const games = await Game.findAll({
+      where: {
+        userId,
+        status: ['won', 'lost', 'draw'],
+      },
+    });
+
+    const stats = games.reduce(
+      (acc, game) => {
+        acc.totalGames++;
+        acc[game.status]++;
+        return acc;
+      },
+      { totalGames: 0, won: 0, lost: 0, draw: 0 },
+    );
+
+    return {
+      totalGames: stats.totalGames,
+      wins: stats.won,
+      losses: stats.lost,
+      draws: stats.draw,
+      winRate: stats.totalGames > 0 ? (stats.won / stats.totalGames) * 100 : 0,
+    };
   }
 }

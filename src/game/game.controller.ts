@@ -1,7 +1,7 @@
-import { Controller, Post, Body, Param, UseGuards, Req } from '@nestjs/common';
+import { Controller, Post, Body, Param, UseGuards, Req, Get } from '@nestjs/common';
 import { GameService } from './game.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { MakeMoveDto, GameResponseDto } from './dto/game.dto';
+import { MakeMoveDto, GameResponseDto, GameHistoryResponseDto, GameStatsResponseDto } from './dto/game.dto';
 
 @Controller('game')
 @UseGuards(JwtAuthGuard)
@@ -12,13 +12,13 @@ export class GameController {
   async makeMove(
     @Param('id') id: number,
     @Req() req,
-    @Body() moveDto: MakeMoveDto
+    @Body() moveDto: MakeMoveDto,
   ): Promise<GameResponseDto> {
     const game = await this.gameService.makeMove(
       id,
       req.user.id,
       moveDto.row,
-      moveDto.col
+      moveDto.col,
     );
     return {
       id: game.id,
@@ -26,7 +26,17 @@ export class GameController {
       status: game.status,
       score: game.user.score,
       consecutiveWins: game.user.consecutiveWins,
-      userId: game.userId
+      userId: game.userId,
     };
+  }
+
+  @Get('history')
+  async getGameHistory(@Req() req): Promise<GameHistoryResponseDto[]> {
+    return this.gameService.getGameHistory(req.user.id);
+  }
+
+  @Get('stats')
+  async getGameStats(@Req() req): Promise<GameStatsResponseDto> {
+    return this.gameService.getGameStats(req.user.id);
   }
 }

@@ -20,3 +20,17 @@ export class GameResponseDto {
   consecutiveWins: number;
   userId: number;
 }
+
+export class GameHistoryResponseDto {
+  id: number;
+  status: 'ongoing' | 'won' | 'lost' | 'draw';  
+  playedAt: Date;
+}
+
+export class GameStatsResponseDto {
+  totalGames: number;
+  wins: number;
+  losses: number;
+  draws: number;
+  winRate: number;
+}
