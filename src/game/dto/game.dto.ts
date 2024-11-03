@@ -32,7 +32,7 @@ export class GameStatsResponseDto {
 export class CreateGameResponseDto {
   id: number;
   board: string[][];
-  status: 'ongoing' | 'won' | 'lost' | 'draw';  ;
+  status: 'ongoing' | 'won' | 'lost' | 'draw';
   userId: number;
 }
 export class GameHistoryResponseDto {

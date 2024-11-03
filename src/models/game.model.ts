@@ -1,4 +1,11 @@
-import { Column, Model, Table, ForeignKey, BelongsTo, DataType } from 'sequelize-typescript';
+import {
+  Column,
+  Model,
+  Table,
+  ForeignKey,
+  BelongsTo,
+  DataType,
+} from 'sequelize-typescript';
 import { User } from './user.model';
 
 @Table
@@ -26,7 +33,7 @@ export class Game extends Model {
     defaultValue: [
       ['', '', ''],
       ['', '', ''],
-      ['', '', '']
+      ['', '', ''],
     ],
   })
   board: string[][];

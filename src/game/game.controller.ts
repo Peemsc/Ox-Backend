@@ -1,20 +1,20 @@
-import { 
-  Controller, 
-  Post, 
-  Get, 
-  Body, 
-  Param, 
-  UseGuards, 
-  Req 
+import {
+  Controller,
+  Post,
+  Get,
+  Body,
+  Param,
+  UseGuards,
+  Req,
 } from '@nestjs/common';
 import { GameService } from './game.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { 
-  MakeMoveDto, 
-  GameResponseDto, 
+import {
+  MakeMoveDto,
+  GameResponseDto,
   GameStatsResponseDto,
-  CreateGameResponseDto, 
-  GameHistoryResponseDto
+  CreateGameResponseDto,
+  GameHistoryResponseDto,
 } from './dto/game.dto';
 
 @Controller('game')
@@ -29,7 +29,7 @@ export class GameController {
       id: game.id,
       board: game.board,
       status: game.status,
-      userId: game.userId
+      userId: game.userId,
     };
   }
 
@@ -37,19 +37,19 @@ export class GameController {
   async makeMove(
     @Param('id') id: number,
     @Req() req,
-    @Body() moveDto: MakeMoveDto
+    @Body() moveDto: MakeMoveDto,
   ): Promise<GameResponseDto> {
     const game = await this.gameService.makeMove(
-      id, 
-      req.user.id, 
-      moveDto.row, 
-      moveDto.col
+      id,
+      req.user.id,
+      moveDto.row,
+      moveDto.col,
     );
     return {
       id: game.id,
       board: game.board,
       status: game.status,
-      userId: game.userId
+      userId: game.userId,
     };
   }
 
@@ -61,7 +61,7 @@ export class GameController {
       id: game.id,
       board: game.board,
       status: game.status,
-      userId: game.userId
+      userId: game.userId,
     };
   }
 

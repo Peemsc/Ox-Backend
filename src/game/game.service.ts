@@ -25,9 +25,9 @@ export class GameService {
       board: [
         ['', '', ''],
         ['', '', ''],
-        ['', '', '']
+        ['', '', ''],
       ],
-      status: 'ongoing'
+      status: 'ongoing',
     });
   }
 
@@ -35,13 +35,18 @@ export class GameService {
     return await Game.findOne({
       where: {
         userId,
-        status: 'ongoing'
+        status: 'ongoing',
       },
-      include: [User]
+      include: [User],
     });
   }
 
-  async makeMove(gameId: number, userId: number, row: number, col: number): Promise<Game> {
+  async makeMove(
+    gameId: number,
+    userId: number,
+    row: number,
+    col: number,
+  ): Promise<Game> {
     const game = await Game.findOne({
       where: { id: gameId, userId },
       include: [User],
@@ -94,10 +99,14 @@ export class GameService {
       throw new NotFoundException('User not found');
     }
 
-    const result = GameBLL.handleGameResult(user.score, user.consecutiveWins, won);
+    const result = GameBLL.handleGameResult(
+      user.score,
+      user.consecutiveWins,
+      won,
+    );
     user.score = result.newScore;
     user.consecutiveWins = result.newConsecutiveWins;
-    
+
     await user.save();
   }
 
@@ -106,57 +115,59 @@ export class GameService {
       where: {
         userId,
         status: {
-          [Op.in]: ['won', 'lost', 'draw']  
-        }
+          [Op.in]: ['won', 'lost', 'draw'],
+        },
       },
       order: [['createdAt', 'DESC']],
       limit: 10,
     });
-  
+
     return games.map((game) => ({
       id: game.id,
-      status: game.status as 'won' | 'lost' | 'draw',  
+      status: game.status as 'won' | 'lost' | 'draw',
       playedAt: game.createdAt,
     }));
   }
 
   async getStats(userId: number): Promise<GameStatsResponseDto> {
     const games = await Game.findAll({
-      where: { userId }
+      where: { userId },
     });
-  
-    const stats = games.reduce((acc, game) => {
-      acc.totalGames++;
-      if (game.status === 'won') acc.gamesWon++;
-      if (game.status === 'lost') acc.gamesLost++;
-      if (game.status === 'draw') acc.gamesDrawn++;
-      return acc;
-    }, { totalGames: 0, gamesWon: 0, gamesLost: 0, gamesDrawn: 0 });
-  
+
+    const stats = games.reduce(
+      (acc, game) => {
+        acc.totalGames++;
+        if (game.status === 'won') acc.gamesWon++;
+        if (game.status === 'lost') acc.gamesLost++;
+        if (game.status === 'draw') acc.gamesDrawn++;
+        return acc;
+      },
+      { totalGames: 0, gamesWon: 0, gamesLost: 0, gamesDrawn: 0 },
+    );
+
     const user = await User.findByPk(userId);
-  
+
     return {
       totalGames: stats.totalGames,
-      wins: stats.gamesWon,        
-      losses: stats.gamesLost,    
-      draws: stats.gamesDrawn,    
+      wins: stats.gamesWon,
+      losses: stats.gamesLost,
+      draws: stats.gamesDrawn,
       currentScore: user.score,
       consecutiveWins: user.consecutiveWins,
-      winRate: stats.totalGames > 0 
-        ? (stats.gamesWon / stats.totalGames) * 100 
-        : 0
+      winRate:
+        stats.totalGames > 0 ? (stats.gamesWon / stats.totalGames) * 100 : 0,
     };
   }
   async getGameStats(userId: number): Promise<GameStatsResponseDto> {
     const user = await User.findByPk(userId);
     const games = await Game.findAll({
-      where: { userId }
+      where: { userId },
     });
 
     const totalGames = games.length;
-    const wins = games.filter(g => g.status === 'won').length;
-    const losses = games.filter(g => g.status === 'lost').length;
-    const draws = games.filter(g => g.status === 'draw').length;
+    const wins = games.filter((g) => g.status === 'won').length;
+    const losses = games.filter((g) => g.status === 'lost').length;
+    const draws = games.filter((g) => g.status === 'draw').length;
 
     return {
       totalGames,
@@ -165,7 +176,7 @@ export class GameService {
       draws,
       currentScore: user.score,
       consecutiveWins: user.consecutiveWins,
-      winRate: totalGames > 0 ? (wins / totalGames) * 100 : 0
+      winRate: totalGames > 0 ? (wins / totalGames) * 100 : 0,
     };
   }
 }

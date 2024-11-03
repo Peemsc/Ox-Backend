@@ -6,9 +6,7 @@ import { Game } from '../models/game.model';
 import { User } from '../models/user.model';
 
 @Module({
-  imports: [
-    SequelizeModule.forFeature([Game, User]),
-  ],
+  imports: [SequelizeModule.forFeature([Game, User])],
   controllers: [GameController],
   providers: [GameService],
 })

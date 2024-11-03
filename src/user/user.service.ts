@@ -7,14 +7,14 @@ import { UserResponseDto } from './dto/user.dto';
 export class UserService {
   constructor(
     @InjectModel(User)
-    private userModel: typeof User
+    private userModel: typeof User,
   ) {}
 
   async findByEmail(email: string): Promise<User> {
     return await this.userModel.findOne({
       where: {
-        email
-      }
+        email,
+      },
     });
   }
 
@@ -34,7 +34,7 @@ export class UserService {
       lastName: userData.lastName,
       profilePicture: userData.profilePicture,
       score: 0,
-      consecutiveWins: 0
+      consecutiveWins: 0,
     });
   }
 
@@ -46,10 +46,10 @@ export class UserService {
   async getLeaderboard(): Promise<UserResponseDto[]> {
     const users = await this.userModel.findAll({
       order: [['score', 'DESC']],
-      limit: 10
+      limit: 10,
     });
-    
-    return users.map(user => this.transformToDto(user));
+
+    return users.map((user) => this.transformToDto(user));
   }
 
   private transformToDto(user: User): UserResponseDto {
@@ -60,7 +60,7 @@ export class UserService {
       lastName: user.lastName,
       profilePicture: user.profilePicture,
       score: user.score,
-      consecutiveWins: user.consecutiveWins
+      consecutiveWins: user.consecutiveWins,
     };
   }
 }

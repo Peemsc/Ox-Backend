@@ -10,9 +10,9 @@ import { UserModule } from '../user/user.module';
 
 @Module({
   imports: [
-    UserModule,  
+    UserModule,
     PassportModule,
-    ConfigModule,  
+    ConfigModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
@@ -23,11 +23,7 @@ import { UserModule } from '../user/user.module';
     }),
   ],
   controllers: [AuthController],
-  providers: [
-    AuthService,
-    GoogleStrategy,
-    JwtStrategy,
-  ],
+  providers: [AuthService, GoogleStrategy, JwtStrategy],
   exports: [AuthService],
 })
 export class AuthModule {}
