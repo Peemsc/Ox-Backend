@@ -41,12 +41,7 @@ export class GameService {
     });
   }
 
-  async makeMove(
-    gameId: number,
-    userId: number,
-    row: number,
-    col: number,
-  ): Promise<Game> {
+  async makeMove(gameId: number, userId: number, row: number, col: number): Promise<Game> {
     const game = await Game.findOne({
       where: { id: gameId, userId },
       include: [User],
@@ -60,17 +55,22 @@ export class GameService {
       throw new BadRequestException('Game is already finished');
     }
 
-    if (!GameBLL.isValidMove(game.board, row, col)) {
-      throw new BadRequestException('Invalid move');
-    }
-
     // Make player's move
     game.board[row][col] = 'X';
 
     // Check if player won
     if (GameBLL.checkWinner(game.board, 'X')) {
       game.status = 'won';
-      await this.updateUserScore(userId, true);
+      const result = GameBLL.handleGameResult(
+        game.user.score,
+        game.user.consecutiveWins,
+        true
+      );
+      
+      game.user.score = result.newScore;
+      game.user.consecutiveWins = result.newConsecutiveWins;
+      await game.user.save();
+      
       return await game.save();
     }
 
@@ -81,13 +81,21 @@ export class GameService {
     }
 
     // Bot's move
-    const botMove = GameBLL.getBestMove(game.board);
+    const botMove = GameBLL.getBotMove(game.board);
     game.board[botMove.row][botMove.col] = 'O';
 
     // Check if bot won
     if (GameBLL.checkWinner(game.board, 'O')) {
       game.status = 'lost';
-      await this.updateUserScore(userId, false);
+      const result = GameBLL.handleGameResult(
+        game.user.score,
+        game.user.consecutiveWins,
+        false
+      );
+      
+      game.user.score = result.newScore;
+      game.user.consecutiveWins = result.newConsecutiveWins;
+      await game.user.save();
     } else if (GameBLL.isBoardFull(game.board)) {
       game.status = 'draw';
     }
