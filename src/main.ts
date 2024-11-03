@@ -9,11 +9,22 @@ async function bootstrap() {
 
   // Swagger setup
   const config = new DocumentBuilder()
-    .setTitle('OX Game API')
-    .setDescription('The OX Game API documentation')
-    .setVersion('1.0')
-    .addBearerAuth()
-    .build();
+  .setTitle('OX Game API')
+  .setDescription(`
+    API for Tic-tac-toe game with OAuth authentication.
+    
+    Features:
+    - Google OAuth login
+    - Game creation and moves
+    - Score tracking
+    - Player statistics
+  `)
+  .setVersion('1.0')
+  .addTag('Authentication', 'Google OAuth endpoints')
+  .addTag('Game', 'Game-related endpoints')
+  .addTag('User', 'User profile and leaderboard')
+  .addBearerAuth()
+  .build();
 
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);

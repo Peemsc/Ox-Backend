@@ -3,16 +3,19 @@ import { NotFoundException } from "@nestjs/common";
 export const ERROR_MESSAGES = {
     GAME: {
       NOT_FOUND: 'Game not found',
-      ALREADY_FINISHED: 'Game is already finished',
-      INVALID_MOVE: 'Invalid move: Position already taken or out of bounds',
-      NOT_YOUR_TURN: 'Not your turn to move',
+      INVALID_MOVE: 'Invalid move position',
+      GAME_OVER: 'Game is already finished',
+      NOT_YOUR_TURN: 'Not your turn',
+      POSITION_TAKEN: 'Position already taken',
     },
     AUTH: {
-      UNAUTHORIZED: 'Unauthorized access',
       INVALID_TOKEN: 'Invalid or expired token',
+      LOGIN_REQUIRED: 'Please login to continue',
+      UNAUTHORIZED: 'Unauthorized access',
     },
     USER: {
       NOT_FOUND: 'User not found',
+      INVALID_DATA: 'Invalid user data',
     },
   };
   
