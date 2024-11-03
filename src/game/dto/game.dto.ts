@@ -29,8 +29,10 @@ export class GameHistoryResponseDto {
 
 export class GameStatsResponseDto {
   totalGames: number;
-  wins: number;
-  losses: number;
-  draws: number;
+  gamesWon: number;
+  gamesLost: number;
+  gamesDrawn: number;
+  currentScore: number;
+  consecutiveWins: number;
   winRate: number;
 }

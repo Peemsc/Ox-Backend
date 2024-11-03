@@ -96,16 +96,25 @@ export class GameBLL {
       }
       return 0;
     }
-  
     static calculateScore(currentScore: number, won: boolean, consecutiveWins: number): number {
       if (won) {
         let newScore = currentScore + 1;
-        // Bonus point for 3 consecutive wins
+        // โบนัสพิเศษสำหรับชนะติดต่อกัน 3 ครั้ง
         if (consecutiveWins === 3) {
           newScore += 1;
         }
         return newScore;
       }
+      // ถ้าแพ้ ลด 1 คะแนน แต่ไม่ติดลบ
       return Math.max(0, currentScore - 1);
     }
+  
+    static updateConsecutiveWins(currentStreak: number, won: boolean): number {
+      if (won) {
+        return currentStreak + 1;
+      }
+      return 0; // รีเซ็ตเมื่อแพ้
+    }
+
+    
   }

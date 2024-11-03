@@ -36,7 +36,7 @@ export class GameController {
   }
 
   @Get('stats')
-  async getGameStats(@Req() req): Promise<GameStatsResponseDto> {
-    return this.gameService.getGameStats(req.user.id);
+  async getStats(@Req() req): Promise<GameStatsResponseDto> {
+    return this.gameService.getStats(req.user.id);
   }
 }

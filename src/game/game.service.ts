@@ -130,29 +130,28 @@ export class GameService {
     }));
   }
 
-  async getGameStats(userId: number): Promise<GameStatsResponseDto> {
+  async getStats(userId: number): Promise<GameStatsResponseDto> {
     const games = await Game.findAll({
-      where: {
-        userId,
-        status: ['won', 'lost', 'draw'],
-      },
+      where: { userId }
     });
 
-    const stats = games.reduce(
-      (acc, game) => {
-        acc.totalGames++;
-        acc[game.status]++;
-        return acc;
-      },
-      { totalGames: 0, won: 0, lost: 0, draw: 0 },
-    );
+    const stats = games.reduce((acc, game) => {
+      acc.totalGames++;
+      if (game.status === 'won') acc.gamesWon++;
+      if (game.status === 'lost') acc.gamesLost++;
+      if (game.status === 'draw') acc.gamesDrawn++;
+      return acc;
+    }, { totalGames: 0, gamesWon: 0, gamesLost: 0, gamesDrawn: 0 });
+
+    const user = await User.findByPk(userId);
 
     return {
-      totalGames: stats.totalGames,
-      wins: stats.won,
-      losses: stats.lost,
-      draws: stats.draw,
-      winRate: stats.totalGames > 0 ? (stats.won / stats.totalGames) * 100 : 0,
+      ...stats,
+      currentScore: user.score,
+      consecutiveWins: user.consecutiveWins,
+      winRate: stats.totalGames > 0 
+        ? (stats.gamesWon / stats.totalGames) * 100 
+        : 0
     };
   }
 }
