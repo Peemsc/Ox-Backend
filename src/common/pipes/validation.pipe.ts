@@ -17,13 +17,22 @@ export class ValidationPipe implements PipeTransform<any> {
     const object = plainToClass(metatype, value);
     const errors = await validate(object);
     if (errors.length > 0) {
-      throw new BadRequestException('Validation failed');
+      throw new BadRequestException(
+        'Validation failed: ' + this.formatErrors(errors),
+      );
     }
-    return value;
+    return object;
   }
 
   private toValidate(metatype: Type<any>): boolean {
     const types: Type<any>[] = [String, Boolean, Number, Array, Object];
     return !types.includes(metatype);
+  }
+
+  private formatErrors(errors: any[]): string {
+    return errors
+      .map(error => Object.values(error.constraints))
+      .flat()
+      .join(', ');
   }
 }
