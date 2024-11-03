@@ -2,6 +2,7 @@ import {
   Injectable,
   UnauthorizedException,
   InternalServerErrorException,
+  BadRequestException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { UserService } from '../user/user.service';
@@ -19,19 +20,27 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
-  async validateUser(
-    userFromGoogle: UserFromGoogleDto,
-  ): Promise<AuthResponseDto> {
+  async validateUser(userFromGoogle: UserFromGoogleDto): Promise<AuthResponseDto> {
     try {
+      // ตรวจสอบข้อมูลที่จำเป็น
+      if (!userFromGoogle?.email || !userFromGoogle?.firstName || !userFromGoogle?.lastName) {
+        throw new BadRequestException('Missing required Google user data');
+      }
+
       let user = await this.userService.findByEmail(userFromGoogle.email);
 
       if (!user) {
-        user = await this.userService.create({
-          email: userFromGoogle.email,
-          firstName: userFromGoogle.firstName,
-          lastName: userFromGoogle.lastName,
-          profilePicture: userFromGoogle.picture,
-        });
+        try {
+          user = await this.userService.create({
+            email: userFromGoogle.email,
+            firstName: userFromGoogle.firstName,
+            lastName: userFromGoogle.lastName,
+            profilePicture: userFromGoogle.picture,
+          });
+        } catch (error) {
+          console.error('Create user error:', error);
+          throw new InternalServerErrorException('Failed to create user');
+        }
       }
 
       const payload: JwtPayloadDto = {
@@ -49,36 +58,17 @@ export class AuthService {
 
       return {
         user: userResponse,
-        accessToken: this.jwtService.sign(payload),
+        accessToken: this.jwtService.sign(payload, {
+          expiresIn: '1d'
+        }),
       };
     } catch (error) {
-      if (error instanceof UnauthorizedException) {
+      if (error instanceof UnauthorizedException || 
+          error instanceof BadRequestException) {
         throw error;
       }
-      throw new InternalServerErrorException(
-        'Error during authentication process',
-      );
-    }
-  }
-
-  async validateToken(token: string): Promise<UserResponseDto> {
-    try {
-      const payload = this.jwtService.verify(token) as JwtPayloadDto;
-      const user = await this.userService.findById(payload.sub);
-
-      if (!user) {
-        throw new UnauthorizedException('User not found');
-      }
-
-      return {
-        id: user.id,
-        email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        profilePicture: user.profilePicture,
-      };
-    } catch (error) {
-      throw new UnauthorizedException('Invalid token');
+      console.error('Authentication error:', error);
+      throw new InternalServerErrorException('Error during authentication process');
     }
   }
 }

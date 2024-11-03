@@ -1,7 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { User } from '../models/user.model';
-import { UserResponseDto } from './dto/user.dto';
+import { UserResponseDto, LeaderboardResponseDto } from './dto/user.dto';
 
 @Injectable()
 export class UserService {
@@ -11,15 +11,21 @@ export class UserService {
   ) {}
 
   async findByEmail(email: string): Promise<User> {
-    return await this.userModel.findOne({
-      where: {
-        email,
-      },
+    const user = await this.userModel.findOne({
+      where: { email },
     });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    return user;
   }
 
   async findById(id: number): Promise<User> {
-    return await this.userModel.findByPk(id);
+    const user = await this.userModel.findByPk(id);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    return user;
   }
 
   async create(userData: {
@@ -28,28 +34,38 @@ export class UserService {
     lastName: string;
     profilePicture?: string;
   }): Promise<User> {
+    const existingUser = await this.findByEmail(userData.email).catch(() => null);
+    if (existingUser) {
+      throw new Error('User already exists');
+    }
+
     return await this.userModel.create({
-      email: userData.email,
-      firstName: userData.firstName,
-      lastName: userData.lastName,
-      profilePicture: userData.profilePicture,
+      ...userData,
       score: 0,
       consecutiveWins: 0,
     });
   }
 
   async getProfile(userId: number): Promise<UserResponseDto> {
-    const user = await this.userModel.findByPk(userId);
+    const user = await this.findById(userId);
     return this.transformToDto(user);
   }
 
-  async getLeaderboard(): Promise<UserResponseDto[]> {
+  async getLeaderboard(limit: number = 10, page: number = 1): Promise<LeaderboardResponseDto[]> {
+    const offset = (page - 1) * limit;
     const users = await this.userModel.findAll({
       order: [['score', 'DESC']],
-      limit: 10,
+      limit,
+      offset,
     });
 
-    return users.map((user) => this.transformToDto(user));
+    return users.map((user, index) => ({
+      id: user.id,
+      fullName: `${user.firstName} ${user.lastName}`,
+      score: user.score,
+      consecutiveWins: user.consecutiveWins,
+      rank: offset + index + 1
+    }));
   }
 
   private transformToDto(user: User): UserResponseDto {
