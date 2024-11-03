@@ -16,23 +16,27 @@ export class GameResponseDto {
   id: number;
   board: string[][];
   status: 'ongoing' | 'won' | 'lost' | 'draw';
-  score: number;
-  consecutiveWins: number;
   userId: number;
-}
-
-export class GameHistoryResponseDto {
-  id: number;
-  status: 'ongoing' | 'won' | 'lost' | 'draw';  
-  playedAt: Date;
 }
 
 export class GameStatsResponseDto {
   totalGames: number;
-  gamesWon: number;
-  gamesLost: number;
-  gamesDrawn: number;
+  wins: number;
+  losses: number;
+  draws: number;
   currentScore: number;
   consecutiveWins: number;
   winRate: number;
+}
+
+export class CreateGameResponseDto {
+  id: number;
+  board: string[][];
+  status: 'ongoing' | 'won' | 'lost' | 'draw';  ;
+  userId: number;
+}
+export class GameHistoryResponseDto {
+  id: number;
+  status: 'won' | 'lost' | 'draw';
+  playedAt: Date;
 }

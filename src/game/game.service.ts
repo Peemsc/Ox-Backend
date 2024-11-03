@@ -7,8 +7,8 @@ import { InjectModel } from '@nestjs/sequelize';
 import { Game } from '../models/game.model';
 import { User } from '../models/user.model';
 import { GameBLL } from './bll/game.bll';
-import { GameHistoryResponseDto, GameStatsResponseDto } from './dto/game.dto';
 import { Op } from 'sequelize';
+import { GameHistoryResponseDto, GameStatsResponseDto } from './dto/game.dto';
 
 @Injectable()
 export class GameService {
@@ -25,9 +25,9 @@ export class GameService {
       board: [
         ['', '', ''],
         ['', '', ''],
-        ['', '', ''],
+        ['', '', '']
       ],
-      status: 'ongoing',
+      status: 'ongoing'
     });
   }
 
@@ -35,9 +35,9 @@ export class GameService {
     return await Game.findOne({
       where: {
         userId,
-        status: 'ongoing',
+        status: 'ongoing'
       },
-      include: [User],
+      include: [User]
     });
   }
 
@@ -61,16 +61,7 @@ export class GameService {
     // Check if player won
     if (GameBLL.checkWinner(game.board, 'X')) {
       game.status = 'won';
-      const result = GameBLL.handleGameResult(
-        game.user.score,
-        game.user.consecutiveWins,
-        true
-      );
-      
-      game.user.score = result.newScore;
-      game.user.consecutiveWins = result.newConsecutiveWins;
-      await game.user.save();
-      
+      await this.updateUserScore(userId, true);
       return await game.save();
     }
 
@@ -82,22 +73,16 @@ export class GameService {
 
     // Bot's move
     const botMove = GameBLL.getBotMove(game.board);
-    game.board[botMove.row][botMove.col] = 'O';
+    if (botMove) {
+      game.board[botMove.row][botMove.col] = 'O';
 
-    // Check if bot won
-    if (GameBLL.checkWinner(game.board, 'O')) {
-      game.status = 'lost';
-      const result = GameBLL.handleGameResult(
-        game.user.score,
-        game.user.consecutiveWins,
-        false
-      );
-      
-      game.user.score = result.newScore;
-      game.user.consecutiveWins = result.newConsecutiveWins;
-      await game.user.save();
-    } else if (GameBLL.isBoardFull(game.board)) {
-      game.status = 'draw';
+      // Check if bot won
+      if (GameBLL.checkWinner(game.board, 'O')) {
+        game.status = 'lost';
+        await this.updateUserScore(userId, false);
+      } else if (GameBLL.isBoardFull(game.board)) {
+        game.status = 'draw';
+      }
     }
 
     return await game.save();
@@ -109,13 +94,10 @@ export class GameService {
       throw new NotFoundException('User not found');
     }
 
-    const newConsecutiveWins = GameBLL.calculateConsecutiveWins(
-      user.consecutiveWins,
-      won,
-    );
-    user.score = GameBLL.calculateScore(user.score, won, newConsecutiveWins);
-    user.consecutiveWins = newConsecutiveWins;
-
+    const result = GameBLL.handleGameResult(user.score, user.consecutiveWins, won);
+    user.score = result.newScore;
+    user.consecutiveWins = result.newConsecutiveWins;
+    
     await user.save();
   }
 
@@ -142,7 +124,7 @@ export class GameService {
     const games = await Game.findAll({
       where: { userId }
     });
-
+  
     const stats = games.reduce((acc, game) => {
       acc.totalGames++;
       if (game.status === 'won') acc.gamesWon++;
@@ -150,16 +132,40 @@ export class GameService {
       if (game.status === 'draw') acc.gamesDrawn++;
       return acc;
     }, { totalGames: 0, gamesWon: 0, gamesLost: 0, gamesDrawn: 0 });
-
+  
     const user = await User.findByPk(userId);
-
+  
     return {
-      ...stats,
+      totalGames: stats.totalGames,
+      wins: stats.gamesWon,        
+      losses: stats.gamesLost,    
+      draws: stats.gamesDrawn,    
       currentScore: user.score,
       consecutiveWins: user.consecutiveWins,
       winRate: stats.totalGames > 0 
         ? (stats.gamesWon / stats.totalGames) * 100 
         : 0
+    };
+  }
+  async getGameStats(userId: number): Promise<GameStatsResponseDto> {
+    const user = await User.findByPk(userId);
+    const games = await Game.findAll({
+      where: { userId }
+    });
+
+    const totalGames = games.length;
+    const wins = games.filter(g => g.status === 'won').length;
+    const losses = games.filter(g => g.status === 'lost').length;
+    const draws = games.filter(g => g.status === 'draw').length;
+
+    return {
+      totalGames,
+      wins,
+      losses,
+      draws,
+      currentScore: user.score,
+      consecutiveWins: user.consecutiveWins,
+      winRate: totalGames > 0 ? (wins / totalGames) * 100 : 0
     };
   }
 }

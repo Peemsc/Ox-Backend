@@ -1,4 +1,3 @@
-// src/bll/game.bll.ts
 export class GameBLL {
     static isValidMove(board: string[][], row: number, col: number): boolean {
       return row >= 0 && row < 3 && col >= 0 && col < 3 && !board[row][col];
@@ -67,7 +66,7 @@ export class GameBLL {
         newConsecutiveWins: 0 // Reset consecutive wins
       };
     }
-    
+
     static getBestMove(board: string[][]): { row: number; col: number } {
       let bestScore = -Infinity;
       let move = { row: 0, col: 0 };
