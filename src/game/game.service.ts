@@ -20,24 +20,24 @@ export class GameService {
   ) {}
 
   async createGame(userId: number): Promise<Game> {
-    return await Game.create({
+    return await this.gameModel.create({
       userId,
       board: [
         ['', '', ''],
         ['', '', ''],
-        ['', '', ''],
+        ['', '', '']
       ],
-      status: 'ongoing',
+      status: 'ongoing'
     });
   }
 
   async getCurrentGame(userId: number): Promise<Game | null> {
-    return await Game.findOne({
+    return await this.gameModel.findOne({
       where: {
         userId,
-        status: 'ongoing',
+        status: 'ongoing'
       },
-      include: [User],
+      include: [User]
     });
   }
 
@@ -46,8 +46,8 @@ export class GameService {
     userId: number,
     row: number,
     col: number,
-  ): Promise<Game> {
-    const game = await Game.findOne({
+): Promise<Game> {
+    const game = await this.gameModel.findOne({
       where: { id: gameId, userId },
       include: [User],
     });
@@ -60,6 +60,9 @@ export class GameService {
       throw new BadRequestException('Game is already finished');
     }
 
+    if (game.board[row][col] !== '') {
+      throw new BadRequestException('Position is already taken');
+    }
     // Make player's move
     game.board[row][col] = 'X';
 
@@ -94,7 +97,7 @@ export class GameService {
   }
 
   private async updateUserScore(userId: number, won: boolean) {
-    const user = await User.findByPk(userId);
+    const user = await this.userModel.findByPk(userId);
     if (!user) {
       throw new NotFoundException('User not found');
     }
@@ -111,7 +114,7 @@ export class GameService {
   }
 
   async getGameHistory(userId: number): Promise<GameHistoryResponseDto[]> {
-    const games = await Game.findAll({
+    const games = await this.gameModel.findAll({
       where: {
         userId,
         status: {
@@ -130,7 +133,7 @@ export class GameService {
   }
 
   async getStats(userId: number): Promise<GameStatsResponseDto> {
-    const games = await Game.findAll({
+    const games = await this.gameModel.findAll({
       where: { userId },
     });
 
@@ -145,7 +148,7 @@ export class GameService {
       { totalGames: 0, gamesWon: 0, gamesLost: 0, gamesDrawn: 0 },
     );
 
-    const user = await User.findByPk(userId);
+    const user = await this.userModel.findByPk(userId);
 
     return {
       totalGames: stats.totalGames,
@@ -159,8 +162,8 @@ export class GameService {
     };
   }
   async getGameStats(userId: number): Promise<GameStatsResponseDto> {
-    const user = await User.findByPk(userId);
-    const games = await Game.findAll({
+    const user = await this.userModel.findByPk(userId);
+    const games = await this.gameModel.findAll({
       where: { userId },
     });
 
